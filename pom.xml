@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.isatools</groupId>
+    <artifactId>ClassificationTreeGenerator</artifactId>
+    <version>0.1</version>
+
+    <developers>
+        <developer>
+            <id>maguire</id>
+            <name>Eamonn Maguire</name>
+            <email>maguire@ebi.ac.uk</email>
+            <organization>ISA Team</organization>
+            <organizationUrl>http://isa-tools.org</organizationUrl>
+            <timezone>0</timezone>
+        </developer>
+    </developers>
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.isatools</groupId>
+            <artifactId>ISAcreator</artifactId>
+            <version>1.6.0</version>
+            <classifier>jar-with-dependencies</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math</artifactId>
+            <version>2.2</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
