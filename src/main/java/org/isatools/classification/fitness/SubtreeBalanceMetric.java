@@ -21,10 +21,7 @@ public class SubtreeBalanceMetric extends FitnessMetric {
 
         // maybe we have to get all standard deviations, then the largest is our reference point for the 1 value.
         // Everything else is a function of the top value.
-        double standardDeviationOfInterest = Statistics.getStdDeviationVariable(schema);
-        double maxStandardDeviation = Statistics.getLargestStdDeviation();
-        // now map to value between 0 and 1;
-        return 1 - (standardDeviationOfInterest / maxStandardDeviation);
+        return 1 - (Statistics.getStdDeviationInNumberOfElements(schema) / Statistics.getMeanElements(schema));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.isatools.classification;
 
+import org.apache.commons.math.stat.descriptive.moment.Mean;
 import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
 import org.isatools.classification.fitness.FitnessCalculator;
 import org.isatools.classification.fitness.FitnessResult;
@@ -24,7 +25,8 @@ public class Statistics {
     public static int totalOccurrences = 0;
 
     private static Map<Classification, Integer> occurrencesWithinClassification = new HashMap<Classification, Integer>();
-    private static Map<ClassificationSchema, Double> stdDeviationAcrossClassification = new HashMap<ClassificationSchema, Double>();
+    private static Map<ClassificationSchema, Double> stdDeviationAcrossSchema = new HashMap<ClassificationSchema, Double>();
+    private static HashMap<ClassificationSchema, Double> meanAcrossSchema = new HashMap<ClassificationSchema, Double>();
 
 
     // todo statistics should take the original classification schemas as a parameter in the constructor, then all the statistics should be loaded in advance of any subsequent calculations.
@@ -32,11 +34,6 @@ public class Statistics {
     public static void addOccurrenceVariable(Classification classification, int occurrence) {
         occurrencesWithinClassification.put(classification, occurrence);
     }
-
-    public static double getOccurrenceVariable(Classification classification) {
-        return occurrencesWithinClassification.get(classification);
-    }
-
 
     public static double getOccurrencesWithinClassificationSchema(ClassificationSchema schema) {
         int totalClassificationCoverage = 0;
@@ -47,13 +44,10 @@ public class Statistics {
         return totalClassificationCoverage;
     }
 
-    public static void addStdDeviationVariable(ClassificationSchema classificationSchema, double stdDeviation) {
-        stdDeviationAcrossClassification.put(classificationSchema, stdDeviation);
-    }
 
-    public static double getStdDeviationVariable(ClassificationSchema classificationSchema) {
-        if (stdDeviationAcrossClassification.containsKey(classificationSchema)) {
-            return stdDeviationAcrossClassification.get(classificationSchema);
+    public static double getStdDeviationInNumberOfElements(ClassificationSchema classificationSchema) {
+        if (stdDeviationAcrossSchema.containsKey(classificationSchema)) {
+            return stdDeviationAcrossSchema.get(classificationSchema);
         }
         return 0.0;
     }
@@ -68,30 +62,30 @@ public class Statistics {
             addOccurrenceVariable(classification, classificationOccurrenceTotal);
         }
 
-        calculateStdDeviation(classificationSchema);
+        doStatisticalAnalysis(classificationSchema);
     }
 
-    private static void calculateStdDeviation(ClassificationSchema classificationSchema) {
+    private static void doStatisticalAnalysis(ClassificationSchema classificationSchema) {
         StandardDeviation standardDeviation = new StandardDeviation();
+        Mean mean = new Mean();
+
         for (Classification classification : classificationSchema.getClassifications().values()) {
-            standardDeviation.increment(occurrencesWithinClassification.get(classification));
+            int numberOfElements = classification.getElements().size();
+
+            standardDeviation.increment(numberOfElements);
+            mean.increment(numberOfElements);
         }
 
-        double stdDeviation = standardDeviation.getResult();
+        double stdDeviationVar = standardDeviation.getResult();
+        double meanVar = mean.getResult();
 
-        stdDeviationAcrossClassification.put(classificationSchema, stdDeviation);
+        stdDeviationAcrossSchema.put(classificationSchema, stdDeviationVar);
+        meanAcrossSchema.put(classificationSchema, meanVar);
     }
 
-    public static double getLargestStdDeviation() {
-        double maxStandardDeviation = Double.MIN_VALUE;
 
-        for (double deviationForClassification : stdDeviationAcrossClassification.values()) {
-            if (deviationForClassification > maxStandardDeviation) {
-                maxStandardDeviation = deviationForClassification;
-            }
-        }
-
-        return maxStandardDeviation;
+    public static double getMeanElements(ClassificationSchema schema) {
+        return meanAcrossSchema.get(schema);
     }
 
     public static Set<ClassificationSchema> findSchemaForClassification(Collection<ClassificationSchema> classificationSchemas,
@@ -140,7 +134,6 @@ public class Statistics {
         return true;
     }
 
-    // TODO CAN REMOVE THIS
     public static double calculatePercentageOfTotal(Classification classification) {
         return ((double) occurrencesWithinClassification.get(classification) / (double) totalOccurrences) * 100;
     }
@@ -159,7 +152,7 @@ public class Statistics {
         for (FitnessResult fitnessResult : fitnessCalculator.getFitnessResults()) {
             // we will ALWAYS process in order. So we just take the first one which becomes
             // available and which hasn't already been recorded
-            if(!observedClassificationSchemas.contains(fitnessResult.getSchema()) && validClassificationSchemas.contains(fitnessResult.getSchema())) {
+            if (!observedClassificationSchemas.contains(fitnessResult.getSchema()) && validClassificationSchemas.contains(fitnessResult.getSchema())) {
                 return fitnessResult.getSchema();
             }
         }

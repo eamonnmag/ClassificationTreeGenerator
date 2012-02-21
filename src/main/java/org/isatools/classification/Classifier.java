@@ -26,7 +26,6 @@ public class Classifier {
 
     private Map<String, List<String[]>> fileContents;
 
-
     private Map<Integer, ClassificationSchema> classificationSchemas;
     private Set<ClassificationSchema> classificationSchemaPool;
 
@@ -47,7 +46,6 @@ public class Classifier {
 
     private void loadFiles() {
         try {
-//            CSVReader processLoader = new CSVReader(new FileReader("TestData/HouseholdItems/household.txt"), '\t');
             CSVReader processLoader = new CSVReader(new FileReader("CleanedData/clean-processes-for-classification.txt"), '\t');
             fileContents.put(PROCESSES, processLoader.readAll());
 

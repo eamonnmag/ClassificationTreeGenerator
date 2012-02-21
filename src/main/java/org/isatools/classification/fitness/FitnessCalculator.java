@@ -23,6 +23,11 @@ public class FitnessCalculator {
         this(new HashMap<String, Double>());
     }
 
+    /**
+     * FitnessCalculator can take a Map of weights for each of the metrics.
+     *
+     * @param metricWeights
+     */
     public FitnessCalculator(Map<String, Double> metricWeights) {
         this.metricWeights = metricWeights;
         instantiateFitnessMetrics();
@@ -38,8 +43,8 @@ public class FitnessCalculator {
             fitnessResults.add(new FitnessResult(schema, fitness));
         }
 
-        harmoniseFitnessMetrics();
         Collections.sort(fitnessResults);
+        normaliseFitnessMetrics();
         return fitnessResults;
     }
 
@@ -55,11 +60,26 @@ public class FitnessCalculator {
         return overallValue;
     }
 
-    private void harmoniseFitnessMetrics() {
+    private void normaliseFitnessMetrics() {
+
+        // We store the last value to check if two numbers actually have the same rank, but are in different positions
+        double lastValue = Double.MIN_VALUE;
+        int lastRank = 0;
+
+        int count = 0;
         for (FitnessResult result : fitnessResults) {
-            double normalisedMetric = 1 - result.getFitness() / maxFitness;
-            result.setNormalizedFitness(normalisedMetric);
+            if (lastValue == result.getFitness()) {
+
+                result.setNormalizedFitness(lastRank / fitnessResults.size());
+            } else {
+                System.out.println(count + "/" + fitnessResults.size());
+                result.setNormalizedFitness((double) count / (fitnessResults.size() - 1));
+                lastRank = count;
+                lastValue = result.getFitness();
+            }
+            count++;
         }
+
     }
 
     public List<FitnessResult> getFitnessResults() {

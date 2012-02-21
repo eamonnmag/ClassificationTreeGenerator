@@ -21,7 +21,7 @@ public class SubclassCountMetric extends FitnessMetric {
         } else if (classificationCount > UPPER_LIMIT) {
             return (double) (UPPER_LIMIT - 1) / UPPER_LIMIT;
         } else {
-            return (double) (UPPER_LIMIT - classificationCount + 1) / UPPER_LIMIT;
+            return (double) (UPPER_LIMIT - classificationCount + 2) / UPPER_LIMIT;
         }
     }
 

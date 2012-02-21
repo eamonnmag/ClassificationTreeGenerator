@@ -66,7 +66,7 @@ public class TreeViewXMLCreator {
     public void addTo(Element element) {
         String elementInfo = "<leaf>\n" +
                 "<attribute name = \"type\" value = \"Element\"/>" +
-                "<attribute name=\"name\" value= \"" + element.getName() + "\"/>" +
+                "<attribute name=\"name\" value= \"" + element.getName() + " #" + element.getOccurrenceCount() + "\"/>" +
                 "\n</leaf>";
         printStream.println(elementInfo);
     }

@@ -30,11 +30,4 @@ public class ClassificationSchema {
         return classifications.get(index);
     }
 
-    public double getStandardDeviationAcrossClassifications() {
-        if (Statistics.getStdDeviationVariable(this) == 0.0) {
-            Statistics.addStatistics(this);
-        }
-
-        return Statistics.getStdDeviationVariable(this);
-    }
 }
