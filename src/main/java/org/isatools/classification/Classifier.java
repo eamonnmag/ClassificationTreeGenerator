@@ -133,7 +133,7 @@ public class Classifier {
         ClassificationSchema schema = fitnessCalculator.getFitnessResults().get(0).getSchema();
 
         classificationSchemaPool.remove(schema);
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Classification");
+//        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Classification");
 
         // we now need to look at each of the sub classifications and select a
         // classification schema which is able to sub classify. This should be based
@@ -141,12 +141,12 @@ public class Classifier {
         // the classifications and not the other.
         treeXMLCreator.addTo(new Classification("Classification"));
 
+
         for (Classification classification : schema.getClassifications().values()) {
             Set<ClassificationSchema> observedSchemas = new HashSet<ClassificationSchema>();
             observedSchemas.add(schema);
-            DefaultMutableTreeNode classificationNode = new DefaultMutableTreeNode(classification);
-            rootNode.add(classificationNode);
-            runSubClassifications(classification, observedSchemas, classificationNode);
+
+            runSubClassifications(classification, observedSchemas, classification.getElements());
         }
         treeXMLCreator.closeBranch();
         treeXMLCreator.closeTree();
@@ -158,45 +158,41 @@ public class Classifier {
     }
 
     private void runSubClassifications(Classification classification,
-                                       Set<ClassificationSchema> observedClassificationSchemas, DefaultMutableTreeNode node) {
-        // look through classifications, find one which contains just elements
-        // within the sub classification
+                                       Set<ClassificationSchema> observedClassificationSchemas,
+                                       Collection<Element> elementsToClassify) {
 
         // locate classification scheme which can be used for the classification
-        
         Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(Statistics.findSchemaForClassification(classificationSchemaPool, classification), observedClassificationSchemas);
         treeXMLCreator.addTo(classification);
+        
         // If we have another classification schema available, it means we are able to sub classify
-        if (validClassificationSchemas.size() > 0 && classification.getElements().size() > 0) {
+        if (validClassificationSchemas.size() > 0 && elementsToClassify.size() > 0) {
             // recalculate fitness based on the restricted number of elements now to be classified
             fitnessCalculator.resetCalculator();
-            System.out.println("Calculating fitness for classification of " + classification.getName() +  " with " + classification.getElements().size() + " elements");
-            fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, Statistics.getElementsInSchemas(Collections.singleton(classification)));
+            fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, elementsToClassify);
             printFitnessResults();
 
             // the best schema is selected from looking at the fitness and the currently available classifications
             ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
 
+
+            for (Element element : getSetDifference(elementsToClassify, Statistics.getElementsInSchemas(bestSchema.getClassifications().values()))) {
+                treeXMLCreator.addTo(element);
+            }
             // we remove classification iteratively
             observedClassificationSchemas.add(bestSchema);
 
             for (Classification classificationCandidate : bestSchema.getClassifications().values()) {
-                DefaultMutableTreeNode newClassification = new DefaultMutableTreeNode(classificationCandidate);
-                node.add(newClassification);
-                runSubClassifications(classificationCandidate, createCopyOfSet(observedClassificationSchemas), newClassification);
+                runSubClassifications(classificationCandidate, createCopyOfSet(observedClassificationSchemas), getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify));
             }
         } else {
             // we cannot classify any more, so are finished
-            for (Element element : classification.getElements()) {
-                if (Statistics.doesElementBelongInClassification(element, node)) {
-                    treeXMLCreator.addTo(element);
-                    node.add(new DefaultMutableTreeNode(element.getName() + " (" + element.getOccurrenceCount() + ")"));
-                }
+            for (Element element : elementsToClassify) {
+                treeXMLCreator.addTo(element);
             }
         }
 
         treeXMLCreator.closeBranch();
-
     }
 
 
@@ -205,6 +201,26 @@ public class Classifier {
         copied.addAll(toCopy);
 
         return copied;
+    }
+
+    private Collection<Element> getIntersectionOfSet(Collection<Element> set1, Collection<Element> set2) {
+        Collection<Element> intersection = new HashSet<Element>();
+        for (Element element : set1) {
+            if (set2.contains(element)) {
+                intersection.add(element);
+            }
+        }
+        return intersection;
+    }
+    
+    private Collection<Element> getSetDifference(Collection<Element> set1, Collection<Element> set2) {
+        Collection<Element> difference = new HashSet<Element>();
+        for (Element element : set1) {
+            if (!set2.contains(element)) {
+                difference.add(element);
+            }
+        }
+        return difference;
     }
 
     private void printClassificationInformation() {

@@ -29,7 +29,7 @@ public class SubtreeBalanceMetric extends FitnessMetric {
     }
 
     @Override
-    public String getName() {
-        return "Subtree Balance Metric";
+    public MetricType getMetricType() {
+        return MetricType.SUBTREE_BALANCE;
     }
 }

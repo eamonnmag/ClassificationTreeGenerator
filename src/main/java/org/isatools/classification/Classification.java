@@ -1,11 +1,12 @@
 package org.isatools.classification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Classification {
 
-    private List<Element> elements;
+    private Collection<Element> elements;
 
     private String name;
     // need to calculate occurrences, proportions of totals, etc.
@@ -19,7 +20,7 @@ public class Classification {
         elements.add(element);
     }
 
-    public List<Element> getElements() {
+    public Collection<Element> getElements() {
         return elements;
     }
 

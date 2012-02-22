@@ -29,10 +29,15 @@ public class Statistics {
         occurrencesWithinClassification.put(classification, occurrence);
     }
 
-    public static double getOccurrencesWithinClassificationSchema(ClassificationSchema schema) {
+    public static double getOccurrencesWithinClassificationSchema(ClassificationSchema schema, Collection<Element> toBeClassified) {
         int totalClassificationCoverage = 0;
         for (Classification classification : schema.getClassifications().values()) {
-            totalClassificationCoverage += occurrencesWithinClassification.get(classification);
+            for(Element element : classification.getElements()) {
+                 if(toBeClassified.contains(element)) {
+                     totalClassificationCoverage +=  element.getOccurrenceCount();
+                 }
+            }
+//            totalClassificationCoverage += occurrencesWithinClassification.get(classification);
         }
         return totalClassificationCoverage;
     }
@@ -59,7 +64,7 @@ public class Statistics {
      * @param classifications - Set of ClassificationSchema objects to query
      * @return Colletion<Element> - a unique collection of Element objects.
      */
-    public static Collection<Element> getElementsInSchemas(Set<Classification> classifications) {
+    public static Collection<Element> getElementsInSchemas(Collection<Classification> classifications) {
         Map<String, Element> elements = new HashMap<String, Element>();
 
         for (Classification classification : classifications) {

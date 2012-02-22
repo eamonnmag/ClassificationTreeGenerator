@@ -15,7 +15,7 @@ import java.util.Set;
  *         Time: 18:39
  */
 public abstract class FitnessMetric {
-    public abstract String getName();
+    public abstract MetricType getMetricType();
 
     public abstract double calculate(ClassificationSchema schema, Collection<Element> elements);
 }

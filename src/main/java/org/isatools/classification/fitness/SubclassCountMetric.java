@@ -30,7 +30,7 @@ public class SubclassCountMetric extends FitnessMetric {
     }
 
     @Override
-    public String getName() {
-        return "Subclass count metric";
+    public MetricType getMetricType() {
+        return MetricType.SUBCLASS_COUNT;
     }
 }

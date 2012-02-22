@@ -3,7 +3,6 @@ package org.isatools.classification.fitness;
 import org.isatools.classification.Classification;
 import org.isatools.classification.ClassificationSchema;
 import org.isatools.classification.Element;
-import org.isatools.classification.Statistics;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,16 +27,21 @@ public class CoverageMetric extends FitnessMetric {
         Set<Element> elementCoverage = new HashSet<Element>();
 
         for (Classification classification : schema.getClassifications().values()) {
-            elementCoverage.addAll(classification.getElements());
+            for (Element element : classification.getElements()) {
+                if (elements.contains(element)) {
+                    elementCoverage.add(element);
+                }
+            }
+
         }
 
         System.out.println("Element coverage = " + elementCoverage.size());
         System.out.println("Number of elements in classification = " + elements.size());
-        return (double) elementCoverage.size() / elements.size();
+        return Math.min(1, (double) elementCoverage.size() / elements.size());
     }
 
     @Override
-    public String getName() {
-        return "Coverage Metric";
+    public MetricType getMetricType(){
+        return MetricType.COVERAGE;
     }
 }

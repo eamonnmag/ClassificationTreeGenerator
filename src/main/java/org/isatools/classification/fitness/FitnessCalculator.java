@@ -17,11 +17,11 @@ public class FitnessCalculator {
 
     private List<FitnessMetric> fitnessMetrics = new ArrayList<FitnessMetric>();
     private List<FitnessResult> fitnessResults = new ArrayList<FitnessResult>();
-    private Map<String, Double> metricWeights;
+    private Map<MetricType, Double> metricWeights;
     private double maxFitness = Double.MIN_VALUE;
 
     public FitnessCalculator() {
-        this(new HashMap<String, Double>());
+        this(new HashMap<MetricType, Double>());
     }
 
     /**
@@ -29,7 +29,7 @@ public class FitnessCalculator {
      *
      * @param metricWeights
      */
-    public FitnessCalculator(Map<String, Double> metricWeights) {
+    public FitnessCalculator(Map<MetricType, Double> metricWeights) {
         this.metricWeights = metricWeights;
         instantiateFitnessMetrics();
     }
@@ -54,9 +54,9 @@ public class FitnessCalculator {
         double overallValue = 0.0;
         System.out.println("Calculating fitness for " + schema.getName());
         for (FitnessMetric metric : fitnessMetrics) {
-            double weight = metricWeights.get(metric.getName()) == null ? 1 : metricWeights.get(metric.getName());
+            double weight = metricWeights.get(metric.getMetricType()) == null ? 1 : metricWeights.get(metric.getMetricType());
             double value = weight * metric.calculate(schema, elements);
-            System.out.println(metric.getName() + " yielded " + value);
+            System.out.println(metric.getMetricType() + " yielded " + value);
             overallValue += value;
         }
         return overallValue;

@@ -23,11 +23,11 @@ public class PotentialUsageMetric extends FitnessMetric {
      */
     public double calculate(ClassificationSchema schema, Collection<Element> elements) {
         // calculate coverage as proportion of occurrences
-        return Statistics.getOccurrencesWithinClassificationSchema(schema) / Statistics.calculateNumberOfOccurrences(elements);
+        return Statistics.getOccurrencesWithinClassificationSchema(schema, elements) / Statistics.calculateNumberOfOccurrences(elements);
     }
 
     @Override
-    public String getName() {
-        return "Potential Use Metric";
+    public MetricType getMetricType(){
+        return MetricType.POTENTIAL_USAGE;
     }
 }
