@@ -133,7 +133,6 @@ public class Classifier {
         ClassificationSchema schema = fitnessCalculator.getFitnessResults().get(0).getSchema();
 
         classificationSchemaPool.remove(schema);
-//        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Classification");
 
         // we now need to look at each of the sub classifications and select a
         // classification schema which is able to sub classify. This should be based
@@ -224,7 +223,7 @@ public class Classifier {
     }
 
     private void printClassificationInformation() {
-        JFrame tree = new JFrame("Household Items Classification");
+        JFrame tree = new JFrame("Classification");
         ClassificationTreeViewer viewerClassification = new ClassificationTreeViewer();
         tree.add(viewerClassification.createTreeView(treeXMLCreator.getTreeFile().getAbsolutePath()));
 

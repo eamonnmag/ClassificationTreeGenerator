@@ -8,14 +8,6 @@ import org.isatools.classification.fitness.FitnessResult;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
-/**
- * Created by the ISA team
- *
- * @author Eamonn Maguire (eamonnmag@gmail.com)
- *         <p/>
- *         Date: 15/01/2012
- *         Time: 11:59
- */
 public class Statistics {
 
     public static int numberOfElements = 0;
@@ -37,7 +29,6 @@ public class Statistics {
                      totalClassificationCoverage +=  element.getOccurrenceCount();
                  }
             }
-//            totalClassificationCoverage += occurrencesWithinClassification.get(classification);
         }
         return totalClassificationCoverage;
     }
@@ -62,7 +53,7 @@ public class Statistics {
      * Gets the unique collection of elements within a classification
      *
      * @param classifications - Set of ClassificationSchema objects to query
-     * @return Colletion<Element> - a unique collection of Element objects.
+     * @return Collection<Element> - a unique collection of Element objects.
      */
     public static Collection<Element> getElementsInSchemas(Collection<Classification> classifications) {
         Map<String, Element> elements = new HashMap<String, Element>();
@@ -159,14 +150,6 @@ public class Statistics {
 
     public static double calculatePercentageOfTotal(Classification classification) {
         return ((double) occurrencesWithinClassification.get(classification) / (double) totalOccurrences) * 100;
-    }
-
-    public static boolean doesElementBelongInClassification(Element element, DefaultMutableTreeNode node) {
-
-        Classification classification = (Classification) node.getUserObject();
-        return classification.getElements().contains(element) && (!(node.getParent() != null
-                && !(((DefaultMutableTreeNode) node.getParent()).getUserObject() instanceof String))
-                || doesElementBelongInClassification(element, (DefaultMutableTreeNode) node.getParent()));
     }
 
     public static ClassificationSchema selectNextBestSchema(Set<ClassificationSchema> validClassificationSchemas, FitnessCalculator fitnessCalculator, Set<ClassificationSchema> observedClassificationSchemas) {
