@@ -1,6 +1,10 @@
 package org.isatools.classification.fitness;
 
 import org.isatools.classification.ClassificationSchema;
+import org.isatools.classification.Element;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Created by the ISA team
@@ -13,5 +17,5 @@ import org.isatools.classification.ClassificationSchema;
 public abstract class FitnessMetric {
     public abstract String getName();
 
-    public abstract double calculate(ClassificationSchema schema);
+    public abstract double calculate(ClassificationSchema schema, Collection<Element> elements);
 }

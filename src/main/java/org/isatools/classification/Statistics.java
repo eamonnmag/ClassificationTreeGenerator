@@ -18,18 +18,12 @@ import java.util.*;
  */
 public class Statistics {
 
-    public static final int FULL_COVERAGE = 1;
-    public static final int PARTIAL_COVERAGE = 2;
-
     public static int numberOfElements = 0;
     public static int totalOccurrences = 0;
 
     private static Map<Classification, Integer> occurrencesWithinClassification = new HashMap<Classification, Integer>();
     private static Map<ClassificationSchema, Double> stdDeviationAcrossSchema = new HashMap<ClassificationSchema, Double>();
-    private static HashMap<ClassificationSchema, Double> meanAcrossSchema = new HashMap<ClassificationSchema, Double>();
-
-
-    // todo statistics should take the original classification schemas as a parameter in the constructor, then all the statistics should be loaded in advance of any subsequent calculations.
+    private static Map<ClassificationSchema, Double> meanAcrossSchema = new HashMap<ClassificationSchema, Double>();
 
     public static void addOccurrenceVariable(Classification classification, int occurrence) {
         occurrencesWithinClassification.put(classification, occurrence);
@@ -40,16 +34,43 @@ public class Statistics {
         for (Classification classification : schema.getClassifications().values()) {
             totalClassificationCoverage += occurrencesWithinClassification.get(classification);
         }
-
         return totalClassificationCoverage;
     }
-
 
     public static double getStdDeviationInNumberOfElements(ClassificationSchema classificationSchema) {
         if (stdDeviationAcrossSchema.containsKey(classificationSchema)) {
             return stdDeviationAcrossSchema.get(classificationSchema);
         }
         return 0.0;
+    }
+
+    public static int calculateNumberOfOccurrences(Collection<Element> elements) {
+        int elementOccurrenceCount = 0;
+        for (Element element : elements) {
+            elementOccurrenceCount += element.getOccurrenceCount();
+        }
+
+        return elementOccurrenceCount;
+    }
+
+    /**
+     * Gets the unique collection of elements within a classification
+     *
+     * @param classifications - Set of ClassificationSchema objects to query
+     * @return Colletion<Element> - a unique collection of Element objects.
+     */
+    public static Collection<Element> getElementsInSchemas(Set<Classification> classifications) {
+        Map<String, Element> elements = new HashMap<String, Element>();
+
+        for (Classification classification : classifications) {
+            for (Element element : classification.getElements()) {
+                if (!elements.containsKey(element.getName())) {
+                    elements.put(element.getName(), element);
+                }
+            }
+        }
+
+        return elements.values();
     }
 
     public static void addStatistics(ClassificationSchema classificationSchema) {
@@ -109,19 +130,16 @@ public class Statistics {
                     }
                 }
             }
-            // now check if this set of elements contains only those elements in the classification
-            // we are checking
+            // now check if this set of elements contains only those elements in the classification we are checking
             if (checkIfSubset(parentElements, elements)) {
                 selectedSchemas.add(classificationSchema);
             }
-
         }
         return selectedSchemas;
     }
 
-    private static boolean checkIfSubset(Set<Element> parentClassificationElements,
-                                         Set<Element> childClassificationElements) {
-
+    private static boolean checkIfSubset(
+            Set<Element> parentClassificationElements, Set<Element> childClassificationElements) {
         // Ensuring that child class contains all parent class elements
         for (Element element : parentClassificationElements) {
             // this would obviously break down if our sub classification
@@ -144,7 +162,6 @@ public class Statistics {
         return classification.getElements().contains(element) && (!(node.getParent() != null
                 && !(((DefaultMutableTreeNode) node.getParent()).getUserObject() instanceof String))
                 || doesElementBelongInClassification(element, (DefaultMutableTreeNode) node.getParent()));
-
     }
 
     public static ClassificationSchema selectNextBestSchema(Set<ClassificationSchema> validClassificationSchemas, FitnessCalculator fitnessCalculator, Set<ClassificationSchema> observedClassificationSchemas) {
@@ -156,7 +173,6 @@ public class Statistics {
                 return fitnessResult.getSchema();
             }
         }
-
         return selectedSchema;
     }
 }

@@ -53,21 +53,31 @@ public class Classifier {
 
             classificationSchemaPool.addAll(classificationSchemas.values());
 
+            // this set is used in the fitness calculator
+            Set<Classification> allClassifications = new HashSet<Classification>();
+
             // pre-populate all the statistics
             for (ClassificationSchema schema : classificationSchemaPool) {
                 Statistics.addStatistics(schema);
+                allClassifications.addAll(schema.getClassifications().values());
             }
+
+            Collection<Element> elements = Statistics.getElementsInSchemas(allClassifications);
 
             fitnessCalculator = new FitnessCalculator();
-            fitnessCalculator.calculateFitnessForAllSchemas(classificationSchemaPool);
+            fitnessCalculator.calculateFitnessForAllSchemas(classificationSchemaPool, elements);
 
-            for (FitnessResult fitnessResult : fitnessCalculator.getFitnessResults()) {
-                System.out.println(fitnessResult.getSchema().getName() + " -> " + fitnessResult.getFitness()
-                        + " (normalised = " + fitnessResult.getNormalizedFitness() + ")");
-            }
+            printFitnessResults();
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void printFitnessResults() {
+        for (FitnessResult fitnessResult : fitnessCalculator.getFitnessResults()) {
+            System.out.println(fitnessResult.getSchema().getName() + " -> " + fitnessResult.getFitness()
+                    + " (normalised = " + fitnessResult.getNormalizedFitness() + ")");
         }
     }
 
@@ -153,10 +163,18 @@ public class Classifier {
         // within the sub classification
 
         // locate classification scheme which can be used for the classification
+        
         Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(Statistics.findSchemaForClassification(classificationSchemaPool, classification), observedClassificationSchemas);
         treeXMLCreator.addTo(classification);
         // If we have another classification schema available, it means we are able to sub classify
-        if (validClassificationSchemas.size() > 0) {
+        if (validClassificationSchemas.size() > 0 && classification.getElements().size() > 0) {
+            // recalculate fitness based on the restricted number of elements now to be classified
+            fitnessCalculator.resetCalculator();
+            System.out.println("Calculating fitness for classification of " + classification.getName() +  " with " + classification.getElements().size() + " elements");
+            fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, Statistics.getElementsInSchemas(Collections.singleton(classification)));
+            printFitnessResults();
+
+            // the best schema is selected from looking at the fitness and the currently available classifications
             ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
 
             // we remove classification iteratively

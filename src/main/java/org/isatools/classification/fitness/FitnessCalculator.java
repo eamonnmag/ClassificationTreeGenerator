@@ -1,6 +1,7 @@
 package org.isatools.classification.fitness;
 
 import org.isatools.classification.ClassificationSchema;
+import org.isatools.classification.Element;
 
 import java.util.*;
 
@@ -33,10 +34,11 @@ public class FitnessCalculator {
         instantiateFitnessMetrics();
     }
 
-    public List<FitnessResult> calculateFitnessForAllSchemas(Collection<ClassificationSchema> schemas) {
-        for (ClassificationSchema schema : schemas) {
+    public List<FitnessResult> calculateFitnessForAllSchemas(Collection<ClassificationSchema> schemas, Collection<Element> elements) {
+//        resetCalculator();
 
-            double fitness = calculateFitness(schema);
+        for (ClassificationSchema schema : schemas) {
+            double fitness = calculateFitness(schema, elements);
             if (fitness > maxFitness) {
                 maxFitness = fitness;
             }
@@ -48,12 +50,12 @@ public class FitnessCalculator {
         return fitnessResults;
     }
 
-    public double calculateFitness(ClassificationSchema schema) {
+    public double calculateFitness(ClassificationSchema schema, Collection<Element> elements) {
         double overallValue = 0.0;
         System.out.println("Calculating fitness for " + schema.getName());
         for (FitnessMetric metric : fitnessMetrics) {
             double weight = metricWeights.get(metric.getName()) == null ? 1 : metricWeights.get(metric.getName());
-            double value = weight * metric.calculate(schema);
+            double value = weight * metric.calculate(schema, elements);
             System.out.println(metric.getName() + " yielded " + value);
             overallValue += value;
         }
@@ -69,10 +71,8 @@ public class FitnessCalculator {
         int count = 0;
         for (FitnessResult result : fitnessResults) {
             if (lastValue == result.getFitness()) {
-
                 result.setNormalizedFitness(lastRank / fitnessResults.size());
             } else {
-                System.out.println(count + "/" + fitnessResults.size());
                 result.setNormalizedFitness((double) count / (fitnessResults.size() - 1));
                 lastRank = count;
                 lastValue = result.getFitness();
@@ -100,5 +100,8 @@ public class FitnessCalculator {
         fitnessMetrics.add(subtreeBalanceMetric);
     }
 
-
+    public void resetCalculator() {
+        fitnessResults.clear();
+        maxFitness = Double.MIN_VALUE;
+    }
 }

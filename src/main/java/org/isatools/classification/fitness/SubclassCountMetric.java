@@ -1,6 +1,10 @@
 package org.isatools.classification.fitness;
 
 import org.isatools.classification.ClassificationSchema;
+import org.isatools.classification.Element;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Created by the ISA team
@@ -14,7 +18,7 @@ public class SubclassCountMetric extends FitnessMetric {
     private static final int UPPER_LIMIT = 10;
 
     @Override
-    public double calculate(ClassificationSchema schema) {
+    public double calculate(ClassificationSchema schema, Collection<Element> elements) {
         int classificationCount = schema.getClassifications().size();
         if (classificationCount < 2) {
             return 0;
