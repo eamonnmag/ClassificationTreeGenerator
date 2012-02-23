@@ -1,11 +1,11 @@
 package org.isatools.classification.fitness;
 
+import org.apache.commons.math.MathException;
 import org.isatools.classification.ClassificationSchema;
 import org.isatools.classification.Element;
 import org.isatools.classification.Statistics;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Created by the ISA team
@@ -23,7 +23,11 @@ public class SubtreeBalanceMetric extends FitnessMetric {
      */
     public double calculate(ClassificationSchema schema, Collection<Element> elements) {
         // higher standard deviations are bad, lower are good. Hence the need for subtraction.
-        return 1 - (Statistics.getStdDeviationInNumberOfElements(schema, elements) / Statistics.getMeanElements(schema, elements));
+        try {
+            return 1-(Statistics.getChiTestScore(schema, elements));
+        } catch (MathException e) {
+            return 0;
+        }
     }
 
     @Override

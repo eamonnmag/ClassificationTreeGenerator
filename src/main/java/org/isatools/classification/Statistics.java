@@ -1,7 +1,10 @@
 package org.isatools.classification;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.math.MathException;
 import org.apache.commons.math.stat.descriptive.moment.Mean;
-import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
+import org.apache.commons.math.stat.inference.ChiSquareTest;
+import org.apache.commons.math.stat.inference.ChiSquareTestImpl;
 import org.isatools.classification.fitness.FitnessCalculator;
 import org.isatools.classification.fitness.FitnessResult;
 
@@ -24,20 +27,39 @@ public class Statistics {
         return totalClassificationCoverage;
     }
 
-    public static double getStdDeviationInNumberOfElements(ClassificationSchema classificationSchema, Collection<Element> elements) {
-        StandardDeviation standardDeviation = new StandardDeviation();
+    public static double getChiTestScore(ClassificationSchema classificationSchema, Collection<Element> elements) throws MathException {
+
+        ChiSquareTest chiSquareTest = new ChiSquareTestImpl();
+        Mean mean = new Mean();
+
+        List<Double> observedValues = new ArrayList<Double>();
 
         for (Classification classification : classificationSchema.getClassifications().values()) {
-            int occurrenceForClassification = 0;
+            double occurrenceForClassification = 0;
             for (Element classificationElement : classification.getElements()) {
                 if (elements.contains(classificationElement)) {
                     occurrenceForClassification++;
                 }
             }
-
-            standardDeviation.increment(occurrenceForClassification);
+            // we don't add zero occurrences since they are not allowed in the ChiTest
+            if (occurrenceForClassification > 0) {
+                observedValues.add(occurrenceForClassification);
+            }
+            
+            mean.increment(occurrenceForClassification);
         }
-        return standardDeviation.getResult();
+
+        long meanResult = (long) mean.getResult();
+
+        long[] expectedValues = new long[observedValues.size()];
+        for (int observedIndex=0; observedIndex < observedValues.size(); observedIndex++) {
+            expectedValues[observedIndex] = meanResult;
+        }
+
+        if(observedValues.size() == 1) return 1;
+
+        return Math.sqrt(chiSquareTest.chiSquareTest(ArrayUtils.toPrimitive(
+                observedValues.toArray(new Double[observedValues.size()])), expectedValues));
     }
 
     public static int calculateNumberOfOccurrences(Collection<Element> elements) {
@@ -88,11 +110,9 @@ public class Statistics {
     }
 
     public static Set<ClassificationSchema> findSchemaForClassification(Collection<ClassificationSchema> classificationSchemas,
-                                                                        Classification classification) {
+                                                                        Collection<Element> elementsInClassification) {
         Set<ClassificationSchema> selectedSchemas = new HashSet<ClassificationSchema>();
 
-        Set<Element> parentElements = new HashSet<Element>();
-        parentElements.addAll(classification.getElements());
 
         // we need to find classification schemas which contain just the elements within this classification
         for (ClassificationSchema classificationSchema : classificationSchemas) {
@@ -109,7 +129,7 @@ public class Statistics {
                 }
             }
             // now check if this set of elements contains only those elements in the classification we are checking
-            if (checkIfSubset(parentElements, elements)) {
+            if (checkIfSubset(elementsInClassification, elements)) {
                 selectedSchemas.add(classificationSchema);
             }
         }
@@ -117,7 +137,7 @@ public class Statistics {
     }
 
     private static boolean checkIfSubset(
-            Set<Element> parentClassificationElements, Set<Element> childClassificationElements) {
+            Collection<Element> parentClassificationElements, Collection<Element> childClassificationElements) {
         // Ensuring that child class contains all parent class elements
         for (Element element : parentClassificationElements) {
             // this would obviously break down if our sub classification

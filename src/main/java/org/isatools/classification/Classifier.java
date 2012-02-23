@@ -160,7 +160,7 @@ public class Classifier {
                                        Collection<Element> elementsToClassify) {
 
         // locate classification scheme which can be used for the classification
-        Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(Statistics.findSchemaForClassification(classificationSchemaPool, classification), observedClassificationSchemas);
+        Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(Statistics.findSchemaForClassification(classificationSchemaPool, elementsToClassify), observedClassificationSchemas);
         treeXMLCreator.addTo(classification);
         
         // If we have another classification schema available, it means we are able to sub classify
