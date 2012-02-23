@@ -58,7 +58,6 @@ public class Classifier {
 
             // pre-populate all the statistics
             for (ClassificationSchema schema : classificationSchemaPool) {
-                Statistics.addStatistics(schema);
                 allClassifications.addAll(schema.getClassifications().values());
             }
 

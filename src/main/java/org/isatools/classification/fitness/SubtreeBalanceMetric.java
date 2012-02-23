@@ -22,10 +22,8 @@ public class SubtreeBalanceMetric extends FitnessMetric {
      * Will return a value between 0 and 1 reflecting the balance of the elements within the subtree
      */
     public double calculate(ClassificationSchema schema, Collection<Element> elements) {
-
-        // maybe we have to get all standard deviations, then the largest is our reference point for the 1 value.
-        // Everything else is a function of the top value.
-        return 1 - (Statistics.getStdDeviationInNumberOfElements(schema) / Statistics.getMeanElements(schema));
+        // higher standard deviations are bad, lower are good. Hence the need for subtraction.
+        return 1 - (Statistics.getStdDeviationInNumberOfElements(schema, elements) / Statistics.getMeanElements(schema, elements));
     }
 
     @Override

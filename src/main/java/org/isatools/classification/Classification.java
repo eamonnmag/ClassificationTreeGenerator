@@ -29,6 +29,6 @@ public class Classification {
     }
 
     public String toString() {
-        return name + " (" + Statistics.calculatePercentageOfTotal(this) + ")";
+        return name;
     }
 }

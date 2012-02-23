@@ -5,7 +5,6 @@ import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
 import org.isatools.classification.fitness.FitnessCalculator;
 import org.isatools.classification.fitness.FitnessResult;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 public class Statistics {
@@ -13,31 +12,32 @@ public class Statistics {
     public static int numberOfElements = 0;
     public static int totalOccurrences = 0;
 
-    private static Map<Classification, Integer> occurrencesWithinClassification = new HashMap<Classification, Integer>();
-    private static Map<ClassificationSchema, Double> stdDeviationAcrossSchema = new HashMap<ClassificationSchema, Double>();
-    private static Map<ClassificationSchema, Double> meanAcrossSchema = new HashMap<ClassificationSchema, Double>();
-
-    public static void addOccurrenceVariable(Classification classification, int occurrence) {
-        occurrencesWithinClassification.put(classification, occurrence);
-    }
-
     public static double getOccurrencesWithinClassificationSchema(ClassificationSchema schema, Collection<Element> toBeClassified) {
         int totalClassificationCoverage = 0;
         for (Classification classification : schema.getClassifications().values()) {
-            for(Element element : classification.getElements()) {
-                 if(toBeClassified.contains(element)) {
-                     totalClassificationCoverage +=  element.getOccurrenceCount();
-                 }
+            for (Element element : classification.getElements()) {
+                if (toBeClassified.contains(element)) {
+                    totalClassificationCoverage += element.getOccurrenceCount();
+                }
             }
         }
         return totalClassificationCoverage;
     }
 
-    public static double getStdDeviationInNumberOfElements(ClassificationSchema classificationSchema) {
-        if (stdDeviationAcrossSchema.containsKey(classificationSchema)) {
-            return stdDeviationAcrossSchema.get(classificationSchema);
+    public static double getStdDeviationInNumberOfElements(ClassificationSchema classificationSchema, Collection<Element> elements) {
+        StandardDeviation standardDeviation = new StandardDeviation();
+
+        for (Classification classification : classificationSchema.getClassifications().values()) {
+            int occurrenceForClassification = 0;
+            for (Element classificationElement : classification.getElements()) {
+                if (elements.contains(classificationElement)) {
+                    occurrenceForClassification++;
+                }
+            }
+
+            standardDeviation.increment(occurrenceForClassification);
         }
-        return 0.0;
+        return standardDeviation.getResult();
     }
 
     public static int calculateNumberOfOccurrences(Collection<Element> elements) {
@@ -69,40 +69,22 @@ public class Statistics {
         return elements.values();
     }
 
-    public static void addStatistics(ClassificationSchema classificationSchema) {
 
-        for (Classification classification : classificationSchema.getClassifications().values()) {
-            int classificationOccurrenceTotal = 0;
-            for (Element element : classification.getElements()) {
-                classificationOccurrenceTotal += element.getOccurrenceCount();
-            }
-            addOccurrenceVariable(classification, classificationOccurrenceTotal);
-        }
+    public static double getMeanElements(ClassificationSchema schema, Collection<Element> elements) {
 
-        doStatisticalAnalysis(classificationSchema);
-    }
-
-    private static void doStatisticalAnalysis(ClassificationSchema classificationSchema) {
-        StandardDeviation standardDeviation = new StandardDeviation();
         Mean mean = new Mean();
 
-        for (Classification classification : classificationSchema.getClassifications().values()) {
-            int numberOfElements = classification.getElements().size();
-
-            standardDeviation.increment(numberOfElements);
+        for (Classification classification : schema.getClassifications().values()) {
+            int numberOfElements = 0;
+            for (Element classificationElement : classification.getElements()) {
+                if (elements.contains(classificationElement)) {
+                    numberOfElements++;
+                }
+            }
             mean.increment(numberOfElements);
         }
 
-        double stdDeviationVar = standardDeviation.getResult();
-        double meanVar = mean.getResult();
-
-        stdDeviationAcrossSchema.put(classificationSchema, stdDeviationVar);
-        meanAcrossSchema.put(classificationSchema, meanVar);
-    }
-
-
-    public static double getMeanElements(ClassificationSchema schema) {
-        return meanAcrossSchema.get(schema);
+        return mean.getResult();
     }
 
     public static Set<ClassificationSchema> findSchemaForClassification(Collection<ClassificationSchema> classificationSchemas,
@@ -146,10 +128,6 @@ public class Statistics {
         }
 
         return true;
-    }
-
-    public static double calculatePercentageOfTotal(Classification classification) {
-        return ((double) occurrencesWithinClassification.get(classification) / (double) totalOccurrences) * 100;
     }
 
     public static ClassificationSchema selectNextBestSchema(Set<ClassificationSchema> validClassificationSchemas, FitnessCalculator fitnessCalculator, Set<ClassificationSchema> observedClassificationSchemas) {
