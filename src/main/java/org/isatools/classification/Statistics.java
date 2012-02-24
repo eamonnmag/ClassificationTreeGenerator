@@ -2,7 +2,10 @@ package org.isatools.classification;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.NormalDistribution;
+import org.apache.commons.math.distribution.NormalDistributionImpl;
 import org.apache.commons.math.stat.descriptive.moment.Mean;
+import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math.stat.inference.ChiSquareTest;
 import org.apache.commons.math.stat.inference.ChiSquareTestImpl;
 import org.isatools.classification.fitness.FitnessCalculator;
@@ -27,10 +30,8 @@ public class Statistics {
         return totalClassificationCoverage;
     }
 
-    public static double getChiTestScore(ClassificationSchema classificationSchema, Collection<Element> elements) throws MathException {
+    public static double calculateChiTestScore(ClassificationSchema classificationSchema, Collection<Element> elements) throws MathException {
 
-        ChiSquareTest chiSquareTest = new ChiSquareTestImpl();
-        Mean mean = new Mean();
 
         List<Double> observedValues = new ArrayList<Double>();
 
@@ -45,21 +46,75 @@ public class Statistics {
             if (occurrenceForClassification > 0) {
                 observedValues.add(occurrenceForClassification);
             }
-            
-            mean.increment(occurrenceForClassification);
         }
 
-        long meanResult = (long) mean.getResult();
+        double[] values = ArrayUtils.toPrimitive(observedValues.toArray(new Double[observedValues.size()]));
 
-        long[] expectedValues = new long[observedValues.size()];
-        for (int observedIndex=0; observedIndex < observedValues.size(); observedIndex++) {
+        return calculateChiTestScore(values);
+    }
+
+    public static double calculateChiTestScore(double[] values) throws MathException {
+        Mean mean = new Mean();
+        long meanResult = (long) mean.evaluate(values);
+
+        long[] expectedValues = new long[values.length];
+        for (int observedIndex = 0; observedIndex < values.length; observedIndex++) {
             expectedValues[observedIndex] = meanResult;
         }
 
-        if(observedValues.size() == 1) return 1;
+        if (values.length == 1) return 1;
 
-        return Math.sqrt(chiSquareTest.chiSquareTest(ArrayUtils.toPrimitive(
-                observedValues.toArray(new Double[observedValues.size()])), expectedValues));
+        ChiSquareTest chiSquareTest = new ChiSquareTestImpl();
+        return Math.sqrt(chiSquareTest.chiSquareTest(values, expectedValues));
+    }
+
+    /**
+     * Returns the P value, larger the better indicating how much variance there is in the data
+     *
+     * @param classificationSchema - Schema to be classified
+     * @param elements             - elements to be further classified
+     * @return double value between 0 and 1 indicating how well the data stays around the mean.
+     */
+    public static double calculateNormalDistributionScore(ClassificationSchema classificationSchema, Collection<Element> elements) {
+        List<Double> observedValues = new ArrayList<Double>();
+        for (Classification classification : classificationSchema.getClassifications().values()) {
+            double occurrenceForClassification = 0;
+            for (Element classificationElement : classification.getElements()) {
+                if (elements.contains(classificationElement)) {
+                    occurrenceForClassification++;
+                }
+            }
+            // we don't add zero occurrences since they are not allowed in the ChiTest
+            if (occurrenceForClassification > 0) {
+                observedValues.add(occurrenceForClassification);
+            }
+        }
+
+        double[] values = ArrayUtils.toPrimitive(observedValues.toArray(new Double[observedValues.size()]));
+        return calculateNormalDistributionScore(values);
+    }
+
+    public static double calculateNormalDistributionScore(double[] values) {
+        Mean mean = new Mean();
+        double meanValue = mean.evaluate(values);
+
+        double stdDev = calculateStandardDeviation(values);
+
+        if (stdDev < 0.000001) {
+            return 1;
+        } else {
+            NormalDistribution distribution = new NormalDistributionImpl(meanValue, stdDev);
+            try {
+                return distribution.cumulativeProbability(meanValue - 1, meanValue + 1);
+            } catch (MathException e) {
+                return 0;
+            }
+        }
+    }
+
+    public static double calculateStandardDeviation(double[] values) {
+        StandardDeviation dev = new StandardDeviation();
+        return dev.evaluate(values);
     }
 
     public static int calculateNumberOfOccurrences(Collection<Element> elements) {
@@ -161,4 +216,38 @@ public class Statistics {
         }
         return selectedSchema;
     }
+
+    public static void testValues(double[] observedValues) {
+        ChiSquareTest chiSquareTest = new ChiSquareTestImpl();
+        Mean mean = new Mean();
+
+        double meanValue = mean.evaluate(observedValues);
+
+        long[] expectedValues = new long[observedValues.length];
+        System.out.println("Observed values");
+        for (int observedCount = 0; observedCount < observedValues.length; observedCount++) {
+            System.out.print(observedValues[observedCount] + "  ");
+            expectedValues[observedCount] = (long) meanValue;
+        }
+        System.out.println();
+
+        double stdDev = calculateStandardDeviation(observedValues);
+
+        NormalDistribution distribution = new NormalDistributionImpl(meanValue, stdDev);
+
+        try {
+            double chiScore = Math.sqrt(chiSquareTest.chiSquareTest(observedValues, expectedValues));
+            double normalDistribution = distribution.cumulativeProbability(meanValue - 1, meanValue + 1);
+
+            System.out.println("Mean is: " + meanValue);
+            System.out.println("Standard deviation is: " + stdDev);
+
+            System.out.println("Chi Score is: " + chiScore);
+            System.out.println("Normal distribution is: " + normalDistribution);
+
+        } catch (MathException e) {
+            System.out.println("Math exception");
+        }
+    }
+
 }
