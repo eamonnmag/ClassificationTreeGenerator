@@ -68,6 +68,14 @@ public class Statistics {
         return Math.sqrt(chiSquareTest.chiSquareTest(values, expectedValues));
     }
 
+    public static double getOccurrencesForElements(Collection<Element> elements) {
+        double occurrences = 0;
+        for (Element element : elements) {
+            occurrences += element.getOccurrenceCount();
+        }
+        return occurrences;
+    }
+
     /**
      * Returns the P value, larger the better indicating how much variance there is in the data
      *
@@ -85,9 +93,7 @@ public class Statistics {
                 }
             }
             // we don't add zero occurrences since they are not allowed in the ChiTest
-            if (occurrenceForClassification > 0) {
-                observedValues.add(occurrenceForClassification);
-            }
+            observedValues.add(occurrenceForClassification);
         }
 
         double[] values = ArrayUtils.toPrimitive(observedValues.toArray(new Double[observedValues.size()]));
@@ -165,39 +171,38 @@ public class Statistics {
     }
 
     public static Set<ClassificationSchema> findSchemaForClassification(Collection<ClassificationSchema> classificationSchemas,
-                                                                        Collection<Element> elementsInClassification) {
-        Set<ClassificationSchema> selectedSchemas = new HashSet<ClassificationSchema>();
-
+                                                                        Collection<Element> elementsToBeClassified) {
+        Set<ClassificationSchema> validClassificationSchemas = new HashSet<ClassificationSchema>();
 
         // we need to find classification schemas which contain just the elements within this classification
         for (ClassificationSchema classificationSchema : classificationSchemas) {
-            Set<Element> elements = new HashSet<Element>();
+            Set<Element> elementsInSchema = new HashSet<Element>();
             for (Classification classificationToInspect : classificationSchema.getClassifications().values()) {
                 for (Element element : classificationToInspect.getElements()) {
-                    if (elements.contains(element)) {
+                    if (elementsInSchema.contains(element)) {
                         System.out.println("WARNING: The element " + element.getName() +
                                 " is classified twice in the same ClassificationSchema (duplicate at "
                                 + classificationToInspect.getName() + ")");
                     } else {
-                        elements.add(element);
+                        elementsInSchema.add(element);
                     }
                 }
             }
             // now check if this set of elements contains only those elements in the classification we are checking
-            if (checkIfSubset(elementsInClassification, elements)) {
-                selectedSchemas.add(classificationSchema);
+            if (checkIfSubset(elementsToBeClassified, elementsInSchema)) {
+                validClassificationSchemas.add(classificationSchema);
             }
         }
-        return selectedSchemas;
+        return validClassificationSchemas;
     }
 
     private static boolean checkIfSubset(
-            Collection<Element> parentClassificationElements, Collection<Element> childClassificationElements) {
+            Collection<Element> elementsInSchema, Collection<Element> elementsToBeClassified) {
         // Ensuring that child class contains all parent class elements
-        for (Element element : parentClassificationElements) {
+        for (Element element : elementsToBeClassified) {
             // this would obviously break down if our sub classification
             // did not classify everything properly
-            if (!childClassificationElements.contains(element)) {
+            if (!elementsInSchema.contains(element)) {
                 return false;
             }
         }
@@ -216,38 +221,4 @@ public class Statistics {
         }
         return selectedSchema;
     }
-
-    public static void testValues(double[] observedValues) {
-        ChiSquareTest chiSquareTest = new ChiSquareTestImpl();
-        Mean mean = new Mean();
-
-        double meanValue = mean.evaluate(observedValues);
-
-        long[] expectedValues = new long[observedValues.length];
-        System.out.println("Observed values");
-        for (int observedCount = 0; observedCount < observedValues.length; observedCount++) {
-            System.out.print(observedValues[observedCount] + "  ");
-            expectedValues[observedCount] = (long) meanValue;
-        }
-        System.out.println();
-
-        double stdDev = calculateStandardDeviation(observedValues);
-
-        NormalDistribution distribution = new NormalDistributionImpl(meanValue, stdDev);
-
-        try {
-            double chiScore = Math.sqrt(chiSquareTest.chiSquareTest(observedValues, expectedValues));
-            double normalDistribution = distribution.cumulativeProbability(meanValue - 1, meanValue + 1);
-
-            System.out.println("Mean is: " + meanValue);
-            System.out.println("Standard deviation is: " + stdDev);
-
-            System.out.println("Chi Score is: " + chiScore);
-            System.out.println("Normal distribution is: " + normalDistribution);
-
-        } catch (MathException e) {
-            System.out.println("Math exception");
-        }
-    }
-
 }

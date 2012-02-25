@@ -18,6 +18,16 @@ import java.awt.*;
  */
 public class ClassificationTreeViewer {
 
+    private int orientation;
+
+    public ClassificationTreeViewer() {
+        this(0);
+    }
+
+    public ClassificationTreeViewer(int orientation) {
+        this.orientation = orientation;
+    }
+
     public JPanel createTreeView(String datafile) {
 
         Color background = UIHelper.BG_COLOR;
@@ -32,7 +42,7 @@ public class ClassificationTreeViewer {
         }
 
         // create a new treemap
-        TreeView tview = new TreeView(t, new Dimension(800, 600));
+        TreeView tview = new TreeView(t, new Dimension(800, 600), orientation);
 
         tview.setBackground(background);
         tview.setForeground(foreground);
@@ -45,18 +55,4 @@ public class ClassificationTreeViewer {
         return panel;
     }
 
-    public static void main(String[] args) {
-        final String dataFile = args[0];
-
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                JFrame tree = new JFrame("TreeView");
-                ClassificationTreeViewer viewerClassification = new ClassificationTreeViewer();
-                tree.add(viewerClassification.createTreeView(dataFile));
-
-                tree.pack();
-                tree.setVisible(true);
-            }
-        });
-    }
 }

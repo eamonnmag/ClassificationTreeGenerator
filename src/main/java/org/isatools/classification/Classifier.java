@@ -7,7 +7,6 @@ import org.isatools.classification.visualise.ClassificationTreeViewer;
 import org.isatools.classification.visualise.TreeViewXMLCreator;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -32,6 +31,7 @@ public class Classifier {
     private FitnessCalculator fitnessCalculator;
 
     private TreeViewXMLCreator treeXMLCreator;
+    private TreeViewXMLCreator schemaSelectionXMLCreator;
 
     public Classifier() {
         this.fileContents = new HashMap<String, List<String[]>>();
@@ -127,7 +127,10 @@ public class Classifier {
     private void runClassificationAlgorithm() {
         // starting point. We get the top level classification
         treeXMLCreator = new TreeViewXMLCreator();
-        treeXMLCreator.generateStart();
+        treeXMLCreator.generateStart("tree");
+
+        schemaSelectionXMLCreator = new TreeViewXMLCreator();
+        schemaSelectionXMLCreator.generateStart("schema");
 
         ClassificationSchema schema = fitnessCalculator.getFitnessResults().get(0).getSchema();
 
@@ -139,6 +142,7 @@ public class Classifier {
         // the classifications and not the other.
         treeXMLCreator.addTo(new Classification("Classification"));
 
+        schemaSelectionXMLCreator.addTo(schema.getName());
 
         for (Classification classification : schema.getClassifications().values()) {
             Set<ClassificationSchema> observedSchemas = new HashSet<ClassificationSchema>();
@@ -148,6 +152,9 @@ public class Classifier {
         }
         treeXMLCreator.closeBranch();
         treeXMLCreator.closeTree();
+
+        schemaSelectionXMLCreator.closeBranch();
+        schemaSelectionXMLCreator.closeTree();
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 printClassificationInformation();
@@ -160,9 +167,10 @@ public class Classifier {
                                        Collection<Element> elementsToClassify) {
 
         // locate classification scheme which can be used for the classification
-        Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(Statistics.findSchemaForClassification(classificationSchemaPool, elementsToClassify), observedClassificationSchemas);
-        treeXMLCreator.addTo(classification);
-        
+        treeXMLCreator.addTo(classification, elementsToClassify);
+
+        Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(classificationSchemaPool, observedClassificationSchemas);
+
         // If we have another classification schema available, it means we are able to sub classify
         if (validClassificationSchemas.size() > 0 && elementsToClassify.size() > 0) {
             // recalculate fitness based on the restricted number of elements now to be classified
@@ -172,32 +180,42 @@ public class Classifier {
 
             // the best schema is selected from looking at the fitness and the currently available classifications
             ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
+            schemaSelectionXMLCreator.addTo(bestSchema.getName());
+            System.out.println("******************************");
+            System.out.println("Next best schema is: " + bestSchema.getName());
+            System.out.println("******************************\n");
 
-
-            for (Element element : getSetDifference(elementsToClassify, Statistics.getElementsInSchemas(bestSchema.getClassifications().values()))) {
-                treeXMLCreator.addTo(element);
-            }
+            // add elements which don't fall into next classification into the tree.
+            addElementsToTree(getSetDifference(elementsToClassify, Statistics.getElementsInSchemas(bestSchema.getClassifications().values())));
             // we remove classification iteratively
             observedClassificationSchemas.add(bestSchema);
 
             for (Classification classificationCandidate : bestSchema.getClassifications().values()) {
-                runSubClassifications(classificationCandidate, createCopyOfSet(observedClassificationSchemas), getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify));
+                Collection<Element> elementsToFurtherClassify = getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify);
+                // we only further classify when there are elements to be classified
+                if (elementsToFurtherClassify.size() > 0) {
+                    runSubClassifications(classificationCandidate, createCopyOfSet(observedClassificationSchemas), getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify));
+                }
             }
+            schemaSelectionXMLCreator.closeBranch();
         } else {
             // we cannot classify any more, so are finished
-            for (Element element : elementsToClassify) {
-                treeXMLCreator.addTo(element);
-            }
+            addElementsToTree(elementsToClassify);
         }
 
         treeXMLCreator.closeBranch();
+    }
+
+    private void addElementsToTree(Collection<Element> elementsToClassify) {
+        for (Element element : elementsToClassify) {
+            treeXMLCreator.addTo(element);
+        }
     }
 
 
     private Set<ClassificationSchema> createCopyOfSet(Set<ClassificationSchema> toCopy) {
         Set<ClassificationSchema> copied = new HashSet<ClassificationSchema>();
         copied.addAll(toCopy);
-
         return copied;
     }
 
@@ -210,7 +228,7 @@ public class Classifier {
         }
         return intersection;
     }
-    
+
     private Collection<Element> getSetDifference(Collection<Element> set1, Collection<Element> set2) {
         Collection<Element> difference = new HashSet<Element>();
         for (Element element : set1) {
@@ -228,6 +246,14 @@ public class Classifier {
 
         tree.pack();
         tree.setVisible(true);
+
+
+        JFrame schemaSelection = new JFrame("Classification Schemas");
+        ClassificationTreeViewer schemaSelectionViewer = new ClassificationTreeViewer(2);
+        schemaSelection.add(schemaSelectionViewer.createTreeView(schemaSelectionXMLCreator.getTreeFile().getAbsolutePath()));
+
+        schemaSelection.pack();
+        schemaSelection.setVisible(true);
     }
 
 
