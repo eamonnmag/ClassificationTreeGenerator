@@ -123,7 +123,9 @@ public class Classifier {
         }
     }
 
-
+    /**
+     * Top point for running the classification. This is the point where the top classification is selected.
+     */
     private void runClassificationAlgorithm() {
         // starting point. We get the top level classification
         treeXMLCreator = new TreeViewXMLCreator();
@@ -162,8 +164,14 @@ public class Classifier {
         });
     }
 
-    private void runSubClassifications(Classification classification,
-                                       Set<ClassificationSchema> observedClassificationSchemas,
+    /**
+     * Performs a recursive operation to further classify each level of the hierarchy
+     *
+     * @param classification                - Classification to be further classified
+     * @param observedClassificationSchemas - ClassificationSchema objects already observed thus far in the classification
+     * @param elementsToClassify            - Elements to be further classified by the algorithm.
+     */
+    private void runSubClassifications(Classification classification, Set<ClassificationSchema> observedClassificationSchemas,
                                        Collection<Element> elementsToClassify) {
 
         // locate classification scheme which can be used for the classification
@@ -174,16 +182,12 @@ public class Classifier {
         // If we have another classification schema available, it means we are able to sub classify
         if (validClassificationSchemas.size() > 0 && elementsToClassify.size() > 0) {
             // recalculate fitness based on the restricted number of elements now to be classified
-            fitnessCalculator.resetCalculator();
             fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, elementsToClassify);
             printFitnessResults();
 
             // the best schema is selected from looking at the fitness and the currently available classifications
             ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
-            schemaSelectionXMLCreator.addTo(bestSchema.getName());
-            System.out.println("******************************");
-            System.out.println("Next best schema is: " + bestSchema.getName());
-            System.out.println("******************************\n");
+
 
             // add elements which don't fall into next classification into the tree.
             addElementsToTree(getSetDifference(elementsToClassify, Statistics.getElementsInSchemas(bestSchema.getClassifications().values())));
@@ -194,10 +198,16 @@ public class Classifier {
                 Collection<Element> elementsToFurtherClassify = getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify);
                 // we only further classify when there are elements to be classified
                 if (elementsToFurtherClassify.size() > 0) {
+                    schemaSelectionXMLCreator.addTo(bestSchema.getName() + " e=" + elementsToClassify.size() + " u=" + Statistics.getOccurrencesForElements(elementsToClassify));
+                    System.out.println("******************************");
+                    System.out.println("Next best schema is: " + bestSchema.getName());
+                    System.out.println("******************************\n");
                     runSubClassifications(classificationCandidate, createCopyOfSet(observedClassificationSchemas), getIntersectionOfSet(classificationCandidate.getElements(), elementsToClassify));
+                    schemaSelectionXMLCreator.closeBranch();
+
                 }
             }
-            schemaSelectionXMLCreator.closeBranch();
+
         } else {
             // we cannot classify any more, so are finished
             addElementsToTree(elementsToClassify);
@@ -240,18 +250,15 @@ public class Classifier {
     }
 
     private void printClassificationInformation() {
-        JFrame tree = new JFrame("Classification");
+        JFrame tree = new JFrame("Taxonomy Hierarchy");
         ClassificationTreeViewer viewerClassification = new ClassificationTreeViewer();
         tree.add(viewerClassification.createTreeView(treeXMLCreator.getTreeFile().getAbsolutePath()));
-
         tree.pack();
         tree.setVisible(true);
-
 
         JFrame schemaSelection = new JFrame("Classification Schemas");
         ClassificationTreeViewer schemaSelectionViewer = new ClassificationTreeViewer(2);
         schemaSelection.add(schemaSelectionViewer.createTreeView(schemaSelectionXMLCreator.getTreeFile().getAbsolutePath()));
-
         schemaSelection.pack();
         schemaSelection.setVisible(true);
     }
@@ -266,7 +273,6 @@ public class Classifier {
                 cleanedResult.add(foundClassificationSchema);
             }
         }
-
         return cleanedResult;
     }
 

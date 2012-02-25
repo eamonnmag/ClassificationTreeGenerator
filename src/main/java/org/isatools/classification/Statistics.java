@@ -103,20 +103,22 @@ public class Statistics {
     public static double calculateNormalDistributionScore(double[] values) {
         Mean mean = new Mean();
         double meanValue = mean.evaluate(values);
-
         double stdDev = calculateStandardDeviation(values);
-
         if (stdDev < 0.000001) {
             return 1;
         } else {
             NormalDistribution distribution = new NormalDistributionImpl(meanValue, stdDev);
             try {
+                // we are calculating the probability that the value falls within +-1 of the mean value.
+                // This is normally calculated on the std deviation, however, since that changes per test, calculating on a
+                // constant value 1 is better for getting a normalised value.
                 return distribution.cumulativeProbability(meanValue - 1, meanValue + 1);
             } catch (MathException e) {
                 return 0;
             }
         }
     }
+
 
     public static double calculateStandardDeviation(double[] values) {
         StandardDeviation dev = new StandardDeviation();

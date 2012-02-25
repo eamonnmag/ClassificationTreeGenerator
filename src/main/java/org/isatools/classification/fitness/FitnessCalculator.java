@@ -17,6 +17,7 @@ public class FitnessCalculator {
 
     private List<FitnessMetric> fitnessMetrics = new ArrayList<FitnessMetric>();
     private List<FitnessResult> fitnessResults = new ArrayList<FitnessResult>();
+    private Map<MetricType, Double> metricResults = new HashMap<MetricType, Double>();
     private Map<MetricType, Double> metricWeights;
     private double maxFitness = Double.MIN_VALUE;
 
@@ -35,7 +36,7 @@ public class FitnessCalculator {
     }
 
     public List<FitnessResult> calculateFitnessForAllSchemas(Collection<ClassificationSchema> schemas, Collection<Element> elements) {
-//        resetCalculator();
+        resetCalculator();
 
         for (ClassificationSchema schema : schemas) {
             double fitness = calculateFitness(schema, elements);
@@ -56,6 +57,14 @@ public class FitnessCalculator {
         for (FitnessMetric metric : fitnessMetrics) {
             double weight = metricWeights.get(metric.getMetricType()) == null ? 1 : metricWeights.get(metric.getMetricType());
             double value = weight * metric.calculate(schema, elements);
+
+            if(metric.getMetricType() == MetricType.SUBTREE_BALANCE) {
+                if(metricResults.get(MetricType.COVERAGE) == 0) {
+                    value = 0;
+                }
+            }
+
+            metricResults.put(metric.getMetricType(), value);
             System.out.println(metric.getMetricType() + " yielded " + value);
             overallValue += value;
         }
@@ -102,6 +111,7 @@ public class FitnessCalculator {
 
     public void resetCalculator() {
         fitnessResults.clear();
+        metricResults.clear();
         maxFitness = Double.MIN_VALUE;
     }
 }

@@ -21,8 +21,6 @@ public class SubtreeBalanceMetric extends FitnessMetric {
      * Will return a value between 0 and 1 reflecting the balance of the elements within the subtree
      */
     public double calculate(ClassificationSchema schema, Collection<Element> elements) {
-        // higher = good, lower = bad.
-
         return Statistics.calculateNormalDistributionScore(schema, elements);
     }
 

@@ -34,9 +34,6 @@ public class CoverageMetric extends FitnessMetric {
             }
 
         }
-
-        System.out.println("Element coverage = " + elementCoverage.size());
-        System.out.println("Number of elements in classification = " + elements.size());
         return Math.min(1, (double) elementCoverage.size() / elements.size());
     }
 

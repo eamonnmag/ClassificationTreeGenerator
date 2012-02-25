@@ -5,7 +5,6 @@ import org.isatools.classification.Element;
 import org.isatools.classification.Statistics;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Created by the ISA team
@@ -24,11 +23,11 @@ public class PotentialUsageMetric extends FitnessMetric {
     public double calculate(ClassificationSchema schema, Collection<Element> elements) {
         // calculate coverage as proportion of occurrences
 
-        return Statistics.getOccurrencesWithinClassificationSchema(schema, elements) / Statistics.calculateNumberOfOccurrences(elements);
+        return Math.min(1, Statistics.getOccurrencesWithinClassificationSchema(schema, elements) / Statistics.calculateNumberOfOccurrences(elements));
     }
 
     @Override
-    public MetricType getMetricType(){
+    public MetricType getMetricType() {
         return MetricType.POTENTIAL_USAGE;
     }
 }
