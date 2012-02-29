@@ -3,6 +3,7 @@ package org.isatools.classification;
 import au.com.bytecode.opencsv.CSVReader;
 import org.isatools.classification.fitness.FitnessCalculator;
 import org.isatools.classification.fitness.FitnessResult;
+import org.isatools.classification.fitness.MetricType;
 import org.isatools.classification.visualise.ClassificationTreeViewer;
 import org.isatools.classification.visualise.TreeViewXMLCreator;
 
@@ -149,7 +150,6 @@ public class Classifier {
         for (Classification classification : schema.getClassifications().values()) {
             Set<ClassificationSchema> observedSchemas = new HashSet<ClassificationSchema>();
             observedSchemas.add(schema);
-
             runSubClassifications(classification, observedSchemas, classification.getElements());
         }
         treeXMLCreator.closeBranch();
@@ -179,15 +179,15 @@ public class Classifier {
 
         Set<ClassificationSchema> validClassificationSchemas = removeAlreadyObservedSchemas(classificationSchemaPool, observedClassificationSchemas);
 
+        fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, elementsToClassify);
+        printFitnessResults();
+
+        // the best schema is selected from looking at the fitness and the currently available classifications
+        ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
+
         // If we have another classification schema available, it means we are able to sub classify
-        if (validClassificationSchemas.size() > 0 && elementsToClassify.size() > 0) {
+        if (validClassificationSchemas.size() > 0 && elementsToClassify.size() > 0 && bestSchema != null) {
             // recalculate fitness based on the restricted number of elements now to be classified
-            fitnessCalculator.calculateFitnessForAllSchemas(validClassificationSchemas, elementsToClassify);
-            printFitnessResults();
-
-            // the best schema is selected from looking at the fitness and the currently available classifications
-            ClassificationSchema bestSchema = Statistics.selectNextBestSchema(validClassificationSchemas, fitnessCalculator, observedClassificationSchemas);
-
 
             // add elements which don't fall into next classification into the tree.
             addElementsToTree(getSetDifference(elementsToClassify, Statistics.getElementsInSchemas(bestSchema.getClassifications().values())));

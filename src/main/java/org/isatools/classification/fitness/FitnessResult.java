@@ -2,6 +2,9 @@ package org.isatools.classification.fitness;
 
 import org.isatools.classification.ClassificationSchema;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by the ISA team
  *
@@ -16,9 +19,16 @@ public class FitnessResult implements Comparable<FitnessResult> {
     private double fitness;
     private double normalizedFitness;
 
+    private Map<MetricType, Double> metricToValue;
+
+    public FitnessResult(ClassificationSchema schema) {
+        this(schema, 0.0);
+    }
+
     public FitnessResult(ClassificationSchema schema, double fitness) {
         this.schema = schema;
         this.fitness = fitness;
+        metricToValue = new HashMap<MetricType, Double>();
     }
 
     public ClassificationSchema getSchema() {
@@ -44,5 +54,21 @@ public class FitnessResult implements Comparable<FitnessResult> {
             return -1;
         }
         return 0;
+    }
+
+    public double getMetricValue(MetricType metric) {
+        if (metricToValue.containsKey(metric)) {
+            return metricToValue.get(metric);
+        } else {
+            return 0;
+        }
+    }
+
+    public void addMetricValue(MetricType metric, double value) {
+        metricToValue.put(metric, value);
+    }
+
+    public void setFitness(double fitness) {
+        this.fitness = fitness;
     }
 }

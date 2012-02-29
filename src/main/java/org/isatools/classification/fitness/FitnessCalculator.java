@@ -15,11 +15,11 @@ import java.util.*;
  */
 public class FitnessCalculator {
 
-    private List<FitnessMetric> fitnessMetrics = new ArrayList<FitnessMetric>();
+    private List<FitnessMetric> metricsToPerform = new ArrayList<FitnessMetric>();
     private List<FitnessResult> fitnessResults = new ArrayList<FitnessResult>();
-    private Map<MetricType, Double> metricResults = new HashMap<MetricType, Double>();
+
     private Map<MetricType, Double> metricWeights;
-    private double maxFitness = Double.MIN_VALUE;
+    private FitnessResult maxFitness;
 
     public FitnessCalculator() {
         this(new HashMap<MetricType, Double>());
@@ -32,6 +32,8 @@ public class FitnessCalculator {
      */
     public FitnessCalculator(Map<MetricType, Double> metricWeights) {
         this.metricWeights = metricWeights;
+        this.maxFitness = null;
+
         instantiateFitnessMetrics();
     }
 
@@ -39,11 +41,22 @@ public class FitnessCalculator {
         resetCalculator();
 
         for (ClassificationSchema schema : schemas) {
-            double fitness = calculateFitness(schema, elements);
-            if (fitness > maxFitness) {
+            FitnessResult fitness = calculateFitness(schema, elements);
+            if(maxFitness == null) {
+                maxFitness = fitness;
+            } else if (fitness.getFitness() > maxFitness.getFitness()) {
                 maxFitness = fitness;
             }
-            fitnessResults.add(new FitnessResult(schema, fitness));
+            
+            fitnessResults.add(fitness);
+        }
+
+        for(FitnessResult fitnessResult : fitnessResults) {
+            if(fitnessResult.getMetricValue(MetricType.COVERAGE) == 0) {
+                fitnessResult.setFitness(0);
+            } else if(fitnessResult.getMetricValue(MetricType.SUBTREE_BALANCE) == 0) {
+                fitnessResult.setFitness(0);
+            }
         }
 
         Collections.sort(fitnessResults);
@@ -51,24 +64,25 @@ public class FitnessCalculator {
         return fitnessResults;
     }
 
-    public double calculateFitness(ClassificationSchema schema, Collection<Element> elements) {
+    public FitnessResult calculateFitness(ClassificationSchema schema, Collection<Element> elements) {
         double overallValue = 0.0;
+        
         System.out.println("Calculating fitness for " + schema.getName());
-        for (FitnessMetric metric : fitnessMetrics) {
+        
+        FitnessResult result = new FitnessResult(schema);
+        
+        for (FitnessMetric metric : metricsToPerform) {
             double weight = metricWeights.get(metric.getMetricType()) == null ? 1 : metricWeights.get(metric.getMetricType());
             double value = weight * metric.calculate(schema, elements);
 
-            if(metric.getMetricType() == MetricType.SUBTREE_BALANCE) {
-                if(metricResults.get(MetricType.COVERAGE) == 0) {
-                    value = 0;
-                }
-            }
-
-            metricResults.put(metric.getMetricType(), value);
+            result.addMetricValue(metric.getMetricType(), value);
+            
             System.out.println(metric.getMetricType() + " yielded " + value);
             overallValue += value;
+            
         }
-        return overallValue;
+        result.setFitness(overallValue);
+        return result;
     }
 
     private void normaliseFitnessMetrics() {
@@ -97,21 +111,20 @@ public class FitnessCalculator {
 
     private void instantiateFitnessMetrics() {
         FitnessMetric coverageMetric = new CoverageMetric();
-        fitnessMetrics.add(coverageMetric);
+        metricsToPerform.add(coverageMetric);
 
         FitnessMetric potentialUsageMetric = new PotentialUsageMetric();
-        fitnessMetrics.add(potentialUsageMetric);
+        metricsToPerform.add(potentialUsageMetric);
 
         FitnessMetric subClassCountMetric = new SubclassCountMetric();
-        fitnessMetrics.add(subClassCountMetric);
+        metricsToPerform.add(subClassCountMetric);
 
         FitnessMetric subtreeBalanceMetric = new SubtreeBalanceMetric();
-        fitnessMetrics.add(subtreeBalanceMetric);
+        metricsToPerform.add(subtreeBalanceMetric);
     }
 
     public void resetCalculator() {
         fitnessResults.clear();
-        metricResults.clear();
-        maxFitness = Double.MIN_VALUE;
+        maxFitness = null;
     }
 }

@@ -198,7 +198,7 @@ public class Statistics {
         return validClassificationSchemas;
     }
 
-    private static boolean checkIfSubset(
+    public static boolean checkIfSubset(
             Collection<Element> elementsInSchema, Collection<Element> elementsToBeClassified) {
         // Ensuring that child class contains all parent class elements
         for (Element element : elementsToBeClassified) {
@@ -217,7 +217,8 @@ public class Statistics {
         for (FitnessResult fitnessResult : fitnessCalculator.getFitnessResults()) {
             // we will ALWAYS process in order. So we just take the first one which becomes
             // available and which hasn't already been recorded
-            if (!observedClassificationSchemas.contains(fitnessResult.getSchema()) && validClassificationSchemas.contains(fitnessResult.getSchema())) {
+            if (!observedClassificationSchemas.contains(fitnessResult.getSchema())
+                    && validClassificationSchemas.contains(fitnessResult.getSchema()) && fitnessResult.getFitness() != 0) {
                 return fitnessResult.getSchema();
             }
         }
